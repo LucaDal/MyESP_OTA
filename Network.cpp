@@ -4,7 +4,6 @@
 Network::Network(const char * base_url, bool useTLS){
 
   this->useTLS = useTLS;
-  this->BASE_URL = String(base_url);
   this->BASE_URL = String("https://") + String(base_url);
   if (useTLS){
     this->trustedRoots.append(cert_ISRG_X1);
