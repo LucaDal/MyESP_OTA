@@ -14,6 +14,7 @@ private:
   Network *network;
   unsigned long t1;
   const char * API_KEY;
+  bool isInit = false;
 
   void initVersion(int EEPROMSize);
   void initNetwork(const char * base_url, bool useTLS);
