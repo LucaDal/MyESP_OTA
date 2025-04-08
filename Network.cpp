@@ -10,6 +10,10 @@ Network::Network(const char * base_url, bool useTLS){
     this->trustedRoots.append(cert_ISRG_X2);
     this->client->setTrustAnchors(&trustedRoots);
     this->client->setSSLVersion(BR_TLS12, BR_TLS12);
+    #ifdef ESP8266
+    //reduce memory so another instance of clientSecure can be defined
+      this->client->setBufferSizes(512,264);
+    #endif
     setClock();
   }else{
     this->client->setInsecure();
