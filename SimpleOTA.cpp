@@ -14,6 +14,7 @@ SimpleOTA::SimpleOTA() {
 void SimpleOTA::init(int EEPROMSize, const char* API_KEY) {
   this->initVersion(EEPROMSize);
   this->API_KEY = API_KEY;
+  this->isInit = true;
   checkUpdates(0);
 }
 
@@ -22,10 +23,9 @@ void SimpleOTA::init(int EEPROMSize, const char* API_KEY) {
  * Firmware data will be saved to the last EEPROM address
  * address_IP is the DNS or IP address without https or http type
  */
-void SimpleOTA::begin(int EEPROMSize, const char* server_IP, const char* API_KEY, bool useTLS) {
+void SimpleOTA::begin(int EEPROMSize, const char* server_IP, const char* API_KEY, bool useTLS = true) {
   this->initNetwork(server_IP, useTLS);
   init(EEPROMSize, API_KEY);
-  this->isInit = true;
 }
 
 /**
@@ -33,9 +33,12 @@ void SimpleOTA::begin(int EEPROMSize, const char* server_IP, const char* API_KEY
  * called from the main thread
  */
 bool SimpleOTA::checkUpdates(unsigned long seconds) {
-  if (!isInit)
+  if (!this->isInit)
     return false;
   if (millis() - t1 >= seconds * 1000) {
+#ifdef DEBUG
+    Serial.printf("*OTA: Checking update\n");
+#endif
     t1 = millis();
     if (network->isConnected())
       return this->serverFirmwareCheck();
@@ -60,6 +63,9 @@ void SimpleOTA::initNetwork(const char* base_url, bool useTLS) {
 
 bool SimpleOTA::startDownload() {
   if (network->fileDownload(API_KEY, version->getFirmwareMD5Image(), version->getOldFirmwareVersion())) {
+#ifdef DEBUG
+    Serial.println("*OTA: Saving new version to EEPROM");
+#endif
     version->saveVersion(version->getNewFirmwareVersion());//save only if update goes fine
 #ifdef DEBUG
     Serial.println("*OTA: Restarting the board");
