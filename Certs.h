@@ -1,6 +1,9 @@
-#ifndef ESP8266_BASIC_WIFI_CERTS_H
-#define ESP8266_BASIC_WIFI_CERTS_H
+#ifndef LETSENCRYPT_CERTS_H
+#define LETSENCRYPT_CERTS_H
 
+#ifdef ESP32
+    #include <Arduino.h>
+#endif
 // Retrieved the root certificates in PEM format
 // from https://letsencrypt.org/certificates/ on 2021-10-29
 
@@ -55,4 +58,4 @@ tL4ndQavEi51mI38AjEAi/V3bNTIZargCyzuFJ0nN6T5U6VR5CmD1/iQMVtCnwr1
 -----END CERTIFICATE-----
 )CERT";
 
-#endif //ESP8266_BASIC_WIFI_CERTS_H
+#endif //LETSENCRYPT_CERTS_H

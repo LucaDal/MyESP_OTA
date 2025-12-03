@@ -6,7 +6,7 @@ void setup() {
   //connect the board to internet first
   //if you want an https connection set useTLS = true:
   //otherwise:
-  simpleOTA->begin(EEPROMsize,"address_IP","THIS_IS_MY_OWN_API_KEY", false);
+  simpleOTA->begin(EEPROMsize,"address_IP","API_TOKEN", false);
 }
 
 void loop() {
