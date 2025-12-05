@@ -1,19 +1,22 @@
 #include "MyUpdater.h"
 
+#define DEBUG
+
 void update_started() {
-  Serial.println("CALLBACK:  HTTP update process started");
+  Serial.println("*OTA: CALLBACK:  HTTP update process started");
 }
 
 void update_finished() {
-  Serial.println("CALLBACK:  HTTP update process finished");
+  Serial.println("*OTA: CALLBACK:  HTTP update process finished");
 }
 
 void update_progress(int cur, int total) {
-  Serial.printf("CALLBACK:  HTTP update process at %d of %d bytes...\n", cur, total);
+  Serial.printf("*OTA: CALLBACK:  HTTP update process at %d of %d bytes...\n", cur,
+                total);
 }
 
 void update_error(int err) {
-  Serial.printf("CALLBACK:  HTTP update fatal error code %d\n", err);
+  Serial.printf("*OTA: CALLBACK:  HTTP update fatal error code %d\n", err);
 }
 
 MyUpdater::MyUpdater(String md5Checksum) {
@@ -38,31 +41,38 @@ MyUpdater::MyUpdater(String md5Checksum) {
 #endif
 }
 
-bool MyUpdater::startUpdate(HTTPClient& https, String currentFirmwareVersion) {
+bool MyUpdater::startUpdate(HTTPClient &client, String currentFirmwareVersion) {
   t_httpUpdate_return ret;
 #ifdef ESP8266
-  ret = ESPhttpUpdate.update(https, currentFirmwareVersion);
+  ret = ESPhttpUpdate.update(client, currentFirmwareVersion);
 #endif
 #ifdef ESP32
-  ret = httpUpdate.update(https, currentFirmwareVersion);
+  ret = httpUpdate.update(client, currentFirmwareVersion);
 #endif
   switch (ret) {
   case HTTP_UPDATE_FAILED:
 #ifdef DEBUG
-    //Serial.printf("HTTP_UPDATE_FAILD Error (%d): %s\n", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
-    Serial.println(F("Retry in passed secs!"));
+#ifdef ESP8266
+    Serial.printf("OTA*: HTTP_UPDATE_FAILD Error (%d): %s\n",
+                  ESPhttpUpdate.getLastError(),
+                  ESPhttpUpdate.getLastErrorString().c_str());
+#elif defined(ESP32)
+    Serial.printf("*OTA: HTTP_UPDATE_FAILD Error (%d): %s\n",
+                  httpUpdate.getLastError(),
+                  httpUpdate.getLastErrorString().c_str());
+#endif
 #endif
     return false;
 
   case HTTP_UPDATE_NO_UPDATES:
 #ifdef DEBUG
-    Serial.println("HTTP_UPDATE_NO_UPDATES");
+    Serial.println("*OTA: HTTP_UPDATE_NO_UPDATES");
 #endif
     break;
 
   case HTTP_UPDATE_OK:
 #ifdef DEBUG
-    Serial.println("HTTP_UPDATE_OK");
+    Serial.println("*OTA: HTTP_UPDATE_OK");
 #endif
     return true;
   }

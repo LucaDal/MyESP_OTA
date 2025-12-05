@@ -20,11 +20,12 @@ void SimpleOTA::init(int EEPROMSize, const char* API_KEY) {
 
 /**
  * @brief initialize OTA class and check updates.
- * Firmware data will be saved to the last EEPROM address
- * address_IP is the DNS or IP address without https or http type
+ * Firmware data will be saved to the last EEPROM address;
+ * address_IP is the DNS or IP address, do NOT pass https or http type;
+ * verifyCert is only used if flag USE_TLS in platformio.ini is set;
  */
-void SimpleOTA::begin(int EEPROMSize, const char* server_IP, const char* API_KEY, bool useTLS = true) {
-  this->initNetwork(server_IP, useTLS);
+void SimpleOTA::begin(int EEPROMSize, const char* server_address, const char* API_KEY, bool verifyCert = true) {
+  this->initNetwork(server_address, verifyCert);
   init(EEPROMSize, API_KEY);
 }
 

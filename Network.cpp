@@ -1,26 +1,27 @@
 #include "Network.h"
 
-Network::Network(const char* base_url, bool useTLS) {
-
-  this->useTLS = useTLS;
-  this->BASE_URL = String("https://") + String(base_url);
-  if (useTLS) {
-#ifdef ESP8266
-    this->trustedRoots.append(cert_ISRG_X1);
-    this->trustedRoots.append(cert_ISRG_X2);
-    this->client->setTrustAnchors(&trustedRoots);
-    this->client->setSSLVersion(BR_TLS12, BR_TLS12);
-    //reduce memory so another instance of clientSecure can be defined
-    this->client->setBufferSizes(512, 264);
-    setClock();
+Network::Network(const char *base_url, bool verifyCert) {
+#ifdef USE_TLS
+#if ESP8266
+  this->BASE_URL = String("https://");
+  this->trustedRoots.append(cert_ISRG_X1);
+  this->trustedRoots.append(cert_ISRG_X2);
+  this->client->setTrustAnchors(&trustedRoots);
+  this->client->setSSLVersion(BR_TLS12, BR_TLS12);
+  // reduce memory so another instance of clientSecure can be defined
+  this->client->setBufferSizes(512, 264);
+  setClock();
 #endif
 #ifdef ESP32
-    this->client->setCACert(cert_ISRG_X1);
+  this->client->setCACert(cert_ISRG_X1);
 #endif
-  }
-  else {
+  if (verifyCert) {
     this->client->setInsecure();
   }
+#else
+  this->BASE_URL = String("http://");
+#endif
+  this->BASE_URL += String(base_url);
 }
 
 void Network::setClock() {
@@ -49,11 +50,10 @@ void Network::WiFiBegin() {
   WiFi.persistent(true);
 }
 
-bool Network::isConnected() {
-  return WiFi.status() == WL_CONNECTED;
-}
+bool Network::isConnected() { return WiFi.status() == WL_CONNECTED; }
 
-bool Network::startConnectionTo(const char* server_api_address, String api_key, String path) {
+bool Network::startConnectionTo(const char *server_api_address, String api_key,
+                                String path) {
   bool http_connected = false;
   String targetURL = this->BASE_URL + server_api_address + api_key + path;
 #ifdef DEBUG
@@ -63,7 +63,6 @@ bool Network::startConnectionTo(const char* server_api_address, String api_key, 
 
   return http_connected;
 }
-
 
 Firmware Network::checkVersion(String api_key) {
 
@@ -84,7 +83,7 @@ Firmware Network::checkVersion(String api_key) {
       if (httpCode == HTTP_CODE_OK) {
         String payload = httpClient.getString();
 #ifdef DEBUG
-        Serial.println(payload);
+        Serial.printf("*OTA: %s\n",payload.c_str());
 #endif
         DeserializationError error = deserializeJson(doc, payload);
         if (error) {
@@ -96,15 +95,15 @@ Firmware Network::checkVersion(String api_key) {
         }
         firmware.version = doc["version"].as<String>();
         firmware.md5_checksum = doc["md5Checksum"].as<String>();
-      }
-      else {
+      } else {
 #ifdef DEBUG
-        Serial.printf("*OTA: [httpClient] GET... failed retrieving version number: %s\n", httpClient.errorToString(httpCode).c_str());
+        Serial.printf(
+            "*OTA: [httpClient] GET... failed retrieving version number: %s\n",
+            httpClient.errorToString(httpCode).c_str());
 #endif
       }
       httpClient.end();
-    }
-    else {
+    } else {
 #ifdef DEBUG
       Serial.println("*OTA: [httpClient] Unable to connect\n");
 #endif
@@ -113,7 +112,8 @@ Firmware Network::checkVersion(String api_key) {
   return firmware;
 }
 
-bool Network::fileDownload(String api_key, String md5Checksum, String currentVersion) {
+bool Network::fileDownload(String api_key, String md5Checksum,
+                           String currentVersion) {
 
   if (isConnected()) {
     MyUpdater update = MyUpdater(md5Checksum);

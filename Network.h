@@ -13,35 +13,53 @@
   #include <ESP8266HTTPClient.h>
   #include <WiFiClientSecureBearSSL.h>
   #include <BearSSLHelpers.h>
-#endif
-#ifdef ESP32
-  #include <WiFiClientSecure.h>
+#elif defined(ESP32)
   #include <WiFi.h>
+  #include <WiFiClientSecure.h>
+  #include <HTTPClient.h>
 #endif
 
+// -----------------------------------------------------------------------------
+// if USE_TLS is defined via build_flags in platformio.ini):
+//   - use ONLY client "secure" (HTTPS)
+// If NOT defined:
+//   - use ONLY WiFiClient (HTTP)
+// If not defined: only HTTP
+// -----------------------------------------------------------------------------
+#ifdef USE_TLS
+  #ifdef ESP8266
+    using NetClient = BearSSL::WiFiClientSecure;
+  #elif defined(ESP32)
+    using NetClient = WiFiClientSecure;
+  #endif
+#else
+  using NetClient = WiFiClient;
+#endif
 
 class Network {
 private:
   HTTPClient httpClient;
 
-  #ifdef ESP8266
-    std::unique_ptr<BearSSL::WiFiClientSecure> client {new BearSSL::WiFiClientSecure};
+  std::unique_ptr<NetClient> client { new NetClient };
+
+  // root CA only f
+#ifdef ESP8266
+  #ifdef USE_TLS
     BearSSL::X509List trustedRoots;
   #endif
-  #ifdef ESP32
-    std::unique_ptr<WiFiClientSecure> client {new WiFiClientSecure};
-  #endif
+#endif
   JsonDocument doc;
   String BASE_URL;
-  bool useTLS;
   void setClock();
-  bool startConnectionTo(const char * server_api_address, String api_key, String path);
+  bool startConnectionTo(const char *server_api_address, String api_key, String path);
 
 public:
-  Network(const char *base_url, bool useTLS);
+  // il bool ora puoi usarlo come "verifyCert" (true = cert valido, false = setInsecure)
+  Network(const char *base_url, bool verifyCert);
   void WiFiBegin();
   bool isConnected();
   Firmware checkVersion(String api_key);
   bool fileDownload(String api_key, String md5Checksum, String currentVersion);
 };
-#endif
+
+#endif // NETWORK_H

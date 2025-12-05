@@ -1,8 +1,10 @@
 #ifndef FIRMWAREDATA_H
 #define FIRMWAREDATA_H
 
-#include <EEPROM.h>   
+#include <EEPROM.h>
 #include "MyFirmware.h"
+
+//#define DEBUG
 
 class FirmwareData {
 private:
@@ -22,4 +24,4 @@ public:
   String getOldFirmwareVersion();
 };
 
-#endif 
+#endif

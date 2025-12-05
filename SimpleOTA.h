@@ -1,8 +1,8 @@
 #ifndef SIMLPEOTA_H
 #define SIMLPEOTA_H
 
-//to activate serial.Print()  
-//#define DEBUG 
+//to activate serial.Print()
+//#define DEBUG
 
 #include <Arduino.h>
 #include "FirmwareData.h"
@@ -25,7 +25,7 @@ private:
 
 public:
   SimpleOTA();
-  void begin(int EEPROMSize,const char * server_IP, const char * API_KEY, bool useTLS);
+  void begin(int EEPROMSize,const char * server_address, const char * API_KEY, bool verifyCert);
   bool checkUpdates(unsigned long seconds);
 };
 
