@@ -29,7 +29,7 @@ void Network::setClock() {
   configTime("Europe/Rome", "europe.pool.ntp.org");
 #endif
 #ifdef DEBUG
-  Serial.printf_P(PSTR("*OTA: %lu: Waiting for NTP time sync "), millis());
+  OTA_LOGF("%lu ntp sync\n", millis());
   time_t now = time(nullptr);
   while (now < 8 * 3600 * 2) {
     delay(250);
@@ -39,9 +39,9 @@ void Network::setClock() {
   Serial.print(F("\r\n"));
   struct tm timeinfo; // NOLINT(cppcoreguidelines-pro-type-member-init)
   gmtime_r(&now, &timeinfo);
-  Serial.printf_P(PSTR("*OTA: Current time (UTC):   %s"), asctime(&timeinfo));
+  OTA_LOGF("utc %s", asctime(&timeinfo));
   localtime_r(&now, &timeinfo);
-  Serial.printf_P(PSTR("*OTA: Current time (Local): %s"), asctime(&timeinfo));
+  OTA_LOGF("local %s", asctime(&timeinfo));
 #endif
 }
 
@@ -56,9 +56,7 @@ bool Network::startConnectionTo(const char *server_api_address, String api_key,
                                 String path) {
   bool http_connected = false;
   String targetURL = this->BASE_URL + server_api_address + api_key + path;
-#ifdef DEBUG
-  Serial.println("*OTA: Connecting to: " + targetURL);
-#endif
+  OTA_LOG(targetURL.c_str());
   http_connected = httpClient.begin(*client, targetURL);
 
   return http_connected;
@@ -68,45 +66,31 @@ Firmware Network::checkVersion(String api_key) {
 
   Firmware firmware;
   firmware.version = "-1";
-#ifdef DEBUG
-  Serial.println("*OTA: checking version");
-#endif
+  OTA_LOG("checking version");
   if (isConnected()) {
 
     bool http_connected = startConnectionTo("/ota/", api_key, "/version");
 
     if (http_connected) {
-#ifdef DEBUG
-      Serial.println("*OTA: Connected");
-#endif
+      OTA_LOG("connected");
       int httpCode = httpClient.GET();
       if (httpCode == HTTP_CODE_OK) {
         String payload = httpClient.getString();
-#ifdef DEBUG
-        Serial.printf("*OTA: %s\n",payload.c_str());
-#endif
+        OTA_LOGF("payload %s\n", payload.c_str());
         DeserializationError error = deserializeJson(doc, payload);
         if (error) {
-#ifdef DEBUG
-          Serial.print(F("*OTA: deserializeJson() failed: "));
-          Serial.println(error.f_str());
-#endif
+          OTA_LOG("json parse fail");
           return firmware;
         }
         firmware.version = doc["version"].as<String>();
         firmware.md5_checksum = doc["md5Checksum"].as<String>();
       } else {
-#ifdef DEBUG
-        Serial.printf(
-            "*OTA: [httpClient] GET... failed retrieving version number: %s\n",
-            httpClient.errorToString(httpCode).c_str());
-#endif
+        OTA_LOGF("get version fail %s\n",
+                 httpClient.errorToString(httpCode).c_str());
       }
       httpClient.end();
     } else {
-#ifdef DEBUG
-      Serial.println("*OTA: [httpClient] Unable to connect\n");
-#endif
+      OTA_LOG("unable to connect");
     }
   }
   return firmware;
@@ -120,9 +104,7 @@ bool Network::fileDownload(String api_key, String md5Checksum,
     bool http_connected = startConnectionTo("/ota/", api_key, "/build");
 
     if (http_connected) {
-#ifdef DEBUG
-      Serial.println("*OTA: Connected - starting download");
-#endif
+      OTA_LOG("connected, start download");
       bool return_value = update.startUpdate(this->httpClient, currentVersion);
       httpClient.end();
       return return_value;

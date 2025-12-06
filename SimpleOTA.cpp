@@ -3,9 +3,7 @@
 static SimpleOTA* instance = NULL;
 
 SimpleOTA::SimpleOTA() {
-#ifdef DEBUG
-  Serial.println("starting the OTA client");
-#endif
+  OTA_LOG("start client");
   t1 = 0;
   instance = this;
 }
@@ -37,9 +35,7 @@ bool SimpleOTA::checkUpdates(unsigned long seconds) {
   if (!this->isInit)
     return false;
   if (millis() - t1 >= seconds * 1000) {
-#ifdef DEBUG
-    Serial.printf("*OTA: Checking update\n");
-#endif
+    OTA_LOG("checking update");
     t1 = millis();
     if (network->isConnected())
       return this->serverFirmwareCheck();
@@ -49,28 +45,20 @@ bool SimpleOTA::checkUpdates(unsigned long seconds) {
 
 void SimpleOTA::initVersion(int EEPROMSize) {
   version = new FirmwareData(EEPROMSize);
-#ifdef DEBUG
-  Serial.printf("*OTA: Current Version: %s\n", version->getNewFirmwareVersion().c_str());
-#endif
+  OTA_LOGF("current version %s\n", version->getNewFirmwareVersion().c_str());
 }
 
 void SimpleOTA::initNetwork(const char* base_url, bool useTLS) {
-#ifdef DEBUG
-  Serial.println("*OTA: initNetwork");
-#endif
+  OTA_LOG("init network");
   network = new Network(base_url, useTLS);
   network->WiFiBegin();
 }
 
 bool SimpleOTA::startDownload() {
   if (network->fileDownload(API_KEY, version->getFirmwareMD5Image(), version->getOldFirmwareVersion())) {
-#ifdef DEBUG
-    Serial.println("*OTA: Saving new version to EEPROM");
-#endif
+    OTA_LOG("saving new version to EEPROM");
     version->saveVersion(version->getNewFirmwareVersion());//save only if update goes fine
-#ifdef DEBUG
-    Serial.println("*OTA: Restarting the board");
-#endif
+    OTA_LOG("restarting board");
     delay(1000); // Wait a second and restart
     ESP.restart();
   }
@@ -82,26 +70,18 @@ bool SimpleOTA::startDownload() {
 bool SimpleOTA::serverFirmwareCheck() {
   version->setNewFirmware(network->checkVersion(API_KEY));
   if (version->getNewFirmwareVersion() == "-1") {
-#ifdef DEBUG
-    Serial.println("*OTA: Server Not Responding");
-#endif
+    OTA_LOG("server not responding");
     return false;
   }
   else {
     if (version->hasNewUpdate()) {
-#ifdef DEBUG
-      Serial.println("*OTA: New Build Available!");
-      Serial.println("*OTA: Starting the donwload!");
-#endif
+      OTA_LOG("new build available, start download");
       return startDownload();
     }
     else {
-#ifdef DEBUG
-      Serial.println("*OTA: Current version up to date");
-#endif
+      OTA_LOG("version up to date");
     }
     return true;
   }
 }
-
 

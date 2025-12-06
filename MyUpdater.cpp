@@ -1,22 +1,19 @@
 #include "MyUpdater.h"
 
-#define DEBUG
-
 void update_started() {
-  Serial.println("*OTA: CALLBACK:  HTTP update process started");
+  OTA_LOG("callback start");
 }
 
 void update_finished() {
-  Serial.println("*OTA: CALLBACK:  HTTP update process finished");
+  OTA_LOG("callback end");
 }
 
 void update_progress(int cur, int total) {
-  Serial.printf("*OTA: CALLBACK:  HTTP update process at %d of %d bytes...\n", cur,
-                total);
+  OTA_LOGF("progress %d/%d\n", cur, total);
 }
 
 void update_error(int err) {
-  Serial.printf("*OTA: CALLBACK:  HTTP update fatal error code %d\n", err);
+  OTA_LOGF("error %d\n", err);
 }
 
 MyUpdater::MyUpdater(String md5Checksum) {
@@ -51,29 +48,23 @@ bool MyUpdater::startUpdate(HTTPClient &client, String currentFirmwareVersion) {
 #endif
   switch (ret) {
   case HTTP_UPDATE_FAILED:
-#ifdef DEBUG
-#ifdef ESP8266
-    Serial.printf("OTA*: HTTP_UPDATE_FAILD Error (%d): %s\n",
-                  ESPhttpUpdate.getLastError(),
-                  ESPhttpUpdate.getLastErrorString().c_str());
-#elif defined(ESP32)
-    Serial.printf("*OTA: HTTP_UPDATE_FAILD Error (%d): %s\n",
-                  httpUpdate.getLastError(),
-                  httpUpdate.getLastErrorString().c_str());
-#endif
-#endif
+    OTA_LOGF("update failed (%d): %s\n",
+             #ifdef ESP8266
+             ESPhttpUpdate.getLastError(),
+             ESPhttpUpdate.getLastErrorString().c_str()
+             #elif defined(ESP32)
+             httpUpdate.getLastError(),
+             httpUpdate.getLastErrorString().c_str()
+             #endif
+    );
     return false;
 
   case HTTP_UPDATE_NO_UPDATES:
-#ifdef DEBUG
-    Serial.println("*OTA: HTTP_UPDATE_NO_UPDATES");
-#endif
+    OTA_LOG("no updates");
     break;
 
   case HTTP_UPDATE_OK:
-#ifdef DEBUG
-    Serial.println("*OTA: HTTP_UPDATE_OK");
-#endif
+    OTA_LOG("update ok");
     return true;
   }
   return false;

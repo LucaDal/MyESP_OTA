@@ -7,6 +7,7 @@
 #include "MyUpdater.h"
 #include "MyFirmware.h"
 #include "Certs.h"
+#include "OtaDebug.h"
 
 #ifdef ESP8266
   #include <ESP8266WiFi.h>

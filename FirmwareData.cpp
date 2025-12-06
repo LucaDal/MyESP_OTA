@@ -40,9 +40,7 @@ void FirmwareData::saveVersion(String version) {
   uint8_t major = getValue(version, '.', 0).toInt();
   uint8_t minor = getValue(version, '.', 1).toInt();
   uint8_t patch = getValue(version, '.', 2).toInt();
-#ifdef DEBUG
-  Serial.printf("*OTA: saving to eeprom:  %i.%i.%i\n", major, minor, patch);
-#endif
+  OTA_LOGF("save %i.%i.%i\n", major, minor, patch);
   EEPROM.write(EEPROMSize - 3, major);
   EEPROM.write(EEPROMSize - 2, minor);
   EEPROM.write(EEPROMSize - 1, patch);
@@ -54,18 +52,13 @@ void FirmwareData::setNewFirmware(Firmware firmware) {
   if (newFirmware.version == firmware.version) {
     return;
   }
-#ifdef DEBUG
-  Serial.printf("OTA*: newFirmware.version = {%s} == {%s} : ",
-                newFirmware.version.c_str(), firmware.version.c_str());
-  Serial.println(newFirmware.version == firmware.version);
-#endif
+  OTA_LOGF("new %s old %s\n", firmware.version.c_str(),
+           newFirmware.version.c_str());
   oldFirmwareVersion = newFirmware.version;
   newFirmware = firmware;
   if (newFirmware.version != "-1") {
-#ifdef DEBUG
-    Serial.printf("*OTA: version: %s\n", newFirmware.version.c_str());
-    Serial.printf("*OTA: MD5Checksum: %s\n", newFirmware.md5_checksum.c_str());
-#endif
+    OTA_LOGF("version %s\n", newFirmware.version.c_str());
+    OTA_LOGF("md5 %s\n", newFirmware.md5_checksum.c_str());
     hasNewFirmware = true;
   }
 }
